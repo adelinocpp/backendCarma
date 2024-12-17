@@ -1,0 +1,34 @@
+[Unit]
+Description=Carma Search Face API for PCMG
+After=network.target
+
+[Service]
+Environment=NODE_ENV='production'
+Environment=API_VERSION=0.0.1
+Environment=HTTP_PORT=3000
+Environment=HOST=localhost
+Environment=URL_ENCODED_LIMIT='500mb'
+Environment=PYTHON3_PATH='/etc/miniconda3/bin/python3'
+Environment=FACE_EMBED_ROUTINE='/var/www/searchLeto/OR03_EmbedFace_v0.py'
+Environment=FACE_SEARCH_ROUTINE='/var/www/searchLeto/OR05_SearchFace_v0.py'
+Environment=TOKEN_ACCESS=fc5892ecf519142a42f7140e1c9664c2cb37b6a08798a07d6f48061985b2d905
+Environment=DB_PORT=3306
+Environment=DB_HOST=localhost
+Environment=DB_PASSWORD=@WSX1qaz3EDcvfR$
+Environment=DB_USER=adelino
+Environment=DB_WEBPASSWORD=*@MKPar9ZSh7XVart7yB97StuFkRSaFx
+Environment=DB_WEBUSER=bulhoes_web_user
+Environment=DB_DATABASE=BulhoesDB
+
+Type=simple
+User=adelino
+ExecStart=/home/adelino/.nvm/versions/node/v21.7.1/bin/node /var/www/backendCarma/dist/server.js
+#ExecStart=/home/adelino/.nvm/versions/node/v18.15.0/bin/node /var/www/backendCarma/dist/server.js
+#ExecStart=node /var/www/backendCarma/dist/server.js
+WorkingDirectory=/var/www/
+Restart=on-failure
+StandardOutput=append:/var/log/carma_server_std_out.log
+StandardError=append:/var/log/carma_server_error.log
+
+[Install]
+WantedBy=multi-user.target
