@@ -1,4 +1,3 @@
-import { IImageFileData, ImageFileData } from "../Models/ImageFileData";
 import SendFace from "../Models/SendFace";
 import { AdminDbPool } from "./General";
 // ----------------------------------------------------------------------------
@@ -43,7 +42,5 @@ async function listDataFromTable(id_list:string[]=[],clearEmbed:boolean=true,get
 }
 // ----------------------------------------------------------------------------
 export {listDataFromTable
-        // checkTableExist,
-        // getAllDataFromTable,
-        // getListOfTablesByUserId,
+      
     };

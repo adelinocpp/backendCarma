@@ -1,12 +1,5 @@
 import { StandardFields } from "./StandardFields";
 import {AdminDbPool} from "../Database/General";
-// import { ImageFileData } from "./ImageFileData";
-// import {getEmbeddingModelVersion} from "../Database/General";
-// import fs from "fs";
-// import path from "path";
-// import child from "child_process";
-// import api from "../Services/api";
-// import axios from "axios";
 import {ISearchRequest,
     ISearchError,
     IFaceCompResult} from "./Interfaces";
@@ -47,37 +40,26 @@ class Report extends StandardFields{
                     VALUES ('${this.id_user_owner}','${this.status}',
                     '${JSON.stringify(this.json_error)}','${JSON.stringify(this.json_request)}',
                     '${JSON.stringify(this.json_report)}') RETURNING id;`
-        
-        // let queryInsertUser = `INSERT INTO tb_report (id_user_owner,status) 
-        //             VALUES ('${this.id_user_owner}','${this.status}') RETURNING id;`                    
-
-        console.log("Report queryInsertUser",queryInsertUser)
-        // conn = await AdminDbPool.getConnection();
         const rows = await conn.query(queryInsertUser);
         this.id = rows[0].id.toString();
-        console.log("rows.id",this.id);
         returnSucess = (rows.length > 0);
     } catch(err:any){
         console.log("ERROR em insertOnDatabase() na classe Report: ", err);
         throw(err);
     }  
-    if (conn) conn.end(); //release to pool
+    if (conn) 
+      conn.end(); //release to pool
     return returnSucess;
 };
   //----------------------------------------------------------------------------
   async loadFromDatabaseById(id_report:string, id_user_owner:string):Promise<boolean>{
     var returnSucess = false;
     let conn;
-    console.log("load Report this", this)
-    // if((this.id != '') || (this.id_user_owner != ''))
-    //     return returnSucess
     conn = await AdminDbPool.getConnection();
     try{
         let querySetUser = `SET @user_id = '${id_user_owner}' `;
         const resp = await conn.query(querySetUser);
         let queryInsertUser = `SELECT * FROM tb_report WHERE ((id = ${id_report}) AND (id_user_owner = '${id_user_owner}'));`
-        console.log("loadFromDatabaseById:", queryInsertUser);
-        // conn = await AdminDbPool.getConnection();
         const rows = await conn.query(queryInsertUser);
         console.log("load Report row", rows);
         if (rows.length > 0){
@@ -97,7 +79,8 @@ class Report extends StandardFields{
         console.log("ERROR em loadFromDatabaseById() na classe Report: ", err);
         throw(err);
     }  
-    if (conn) conn.end(); //release to pool
+    if (conn) 
+      conn.end(); //release to pool
     return returnSucess;
   };
   // --------------------------------------------------------------------------
@@ -108,12 +91,6 @@ class Report extends StandardFields{
     try{
         let querySetUser = `SET @user_id = '${this.id_user_owner}' `;
         const resp = await conn.query(querySetUser);
-        // let queryInsertUser = `UPDATE tb_report (id_user_owner,id_share,status,
-        //             json_error,json_request,json_report) 
-        //             VALUES ('${this.id_user_owner}',${this.id_share},'${this.status}'
-        //             '${JSON.stringify(this.json_error)}','${JSON.stringify(this.json_request)}',
-        //             '${JSON.stringify(this.json_report)}') WHERE id = ${this.id};`
-        // id_share = ${this.id_share}, status = '${this.status}',
         let queryInsertUser = `UPDATE tb_report SET id_user_owner = '${this.id_user_owner}', 
                           json_error = '${JSON.stringify(this.json_error)}', 
                           json_request = '${JSON.stringify(this.json_request)}',
@@ -127,7 +104,8 @@ class Report extends StandardFields{
       console.log("ERROR em updateInDatabaseById() na classe Report: ", err);
       throw(err);
     } 
-    if (conn) conn.end(); //release to pool
+    if (conn) 
+      conn.end(); 
     return returnSucess;
   }
 }

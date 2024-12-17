@@ -44,7 +44,5 @@ async function listDataFromTable(id_list:string[]=[],clearEmbed:boolean=true,get
 }
 // ----------------------------------------------------------------------------
 export {listDataFromTable
-        // checkTableExist,
-        // getAllDataFromTable,
-        // getListOfTablesByUserId,
+        
     };

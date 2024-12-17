@@ -17,7 +17,6 @@ class ImageFileData{
     constructor(nImgData:IImageFileData){
         var strFormat: string = '';
         var ckData64  = false, ckFileName = false;
-        //console.log("nImgData.base64_data !== undefined",nImgData.base64_data === undefined)
         if (! (nImgData.base64_data === undefined)){
             let isImageData: boolean = nImgData.base64_data.split("/")[0] === 'data:image';
             let isMinSize: boolean = (nImgData.base64_data.length > 66);
@@ -30,10 +29,8 @@ class ImageFileData{
             }
         }
         if (nImgData.file_name !== undefined){
-            // console.log(nImgData.file_name)
             let fileParts = nImgData.file_name.split(".");
             let fileExt = fileParts[fileParts.length-1];
-            // console.log(fileExt)
             if(fileExt === strFormat){
                 this.original_file_name = nImgData.file_name
                 ckFileName = true;
@@ -46,19 +43,15 @@ class ImageFileData{
             var NewName = hashMD5.update(this.original_file_name + Date.now()).digest("hex").toString() + 
                                 "-" + sanatiFileName(this.original_file_name);
             var curDirParts:string = '' 
-            
-            if (process.env.NODE_ENV == 'development'){
-                let DirParts = process.cwd().split("/");
-                curDirParts = DirParts.slice(0,curDirParts.length-1).join("/")
-            //  this.current_full_file_path = curDirParts.slice(0,curDirParts.length-1).join("/") + "/backendCarmaImages/" + NewName;
-            } else{
-                curDirParts = process.cwd()
-            }
-            console.log("curDirParts",curDirParts)
+            // if (process.env.NODE_ENV == 'development'){
+            //     let DirParts = process.cwd().split("/");
+            //     curDirParts = DirParts.slice(0,curDirParts.length-1).join("/")
+            // } else{
+            //     curDirParts = process.cwd()
+            // }
+            curDirParts = process.cwd()
+            // console.log("curDirParts",curDirParts)
             this.current_full_file_path = curDirParts + "/backendCarmaImages/" + NewName;
-
-            // console.log("Class:ImageFileData; function:constructor; Data: process.cwd():", process.cwd());    
-            // console.log("Class:ImageFileData; function:constructor; Data: current_full_file_path:", this.current_full_file_path);
             var base64Data = this.base64_data.split("base64,").pop() as string;            
             this.hash_sha3 = hashsha3.update(base64Data).digest("hex").toString();
             fs.writeFileSync(this.current_full_file_path, base64Data,{encoding: 'base64'}); 
@@ -73,7 +66,6 @@ class ImageFileData{
     getHash():string{return this.hash_sha3;};
     checkComplete():boolean{return this.is_complete;};
     // -----------------------------------------------------------------------
-    
 }
 // ----------------------------------------------------------------------------
 export {IImageFileData, ImageFileData};

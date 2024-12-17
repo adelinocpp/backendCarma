@@ -1,14 +1,8 @@
-import { Face, StandardFields } from "./StandardFields";
 import {AdminDbPool} from "../Database/General";
-import { ImageFileData } from "./ImageFileData";
-import {getEmbeddingModelVersion} from "../Database/General";
 import fs from "fs";
-import path from "path";
 import child from "child_process";
-import api from "../Services/api";
+import { Face } from "./Face";
 import axios from "axios";
-import {IReport, IFaceData} from "./Interfaces";
-import crypto  from "crypto";
 
 //-----------------------------------------------------------------------------
 class KnowFace extends Face{
@@ -28,15 +22,6 @@ class KnowFace extends Face{
             }
   };
   //-------------------------------------------------------------------------
-  // clearEmbedding(){
-  //   var clear_json_face_data: IFaceData = {};
-  //   clear_json_face_data = this.json_face_data;
-  //   clear_json_face_data.face_embedding = [];
-  //   clear_json_face_data.face_plda = [];
-  //   clear_json_face_data.embedding_version = '';
-  //   this.json_face_data = clear_json_face_data;
-  // };
-  //-------------------------------------------------------------------------
   setRGMG(strValue:string){this.rg_mg = strValue;};
   //-------------------------------------------------------------------------
   setCPF(strValue:string){this.cpf = strValue;};
@@ -44,43 +29,6 @@ class KnowFace extends Face{
   setProntuario(strValue:string){this.prontuario = strValue;};
   //-------------------------------------------------------------------------
   setObsoleto(strValue:boolean){this.obsoleto = strValue;};
-  //-------------------------------------------------------------------------
-  // setJsonFaceData(jsonFaceData: IFaceData){
-  //   this.json_face_data = jsonFaceData;
-  // }
-  // //-------------------------------------------------------------------------
-  // getFullFilePath(){return this.json_face_data.face_image_path === undefined?"":this.json_face_data.face_image_path};
-  // //------------------------------------------------------------------------- 
-  // setImageFileData(nImageFileData:ImageFileData){
-  //     let jsonFaceData:IFaceData = {};
-  //     jsonFaceData.face_image_path = nImageFileData.getFullFilePath();
-  //     jsonFaceData.hash_sha3 = nImageFileData.getHash();
-  //     // console.log("jsonFaceData",jsonFaceData)
-  //     this.json_face_data = jsonFaceData;
-  // }
-  // //------------------------------------------------------------------------- 
-  // loadBase64Data(){
-  //   if (this.json_face_data.face_image_path !== undefined){
-  //     console.log("loadBase64Data 1")
-  //     let filename:string = this.json_face_data.face_image_path;
-  //     let fileParts = filename.split(".");
-  //     let fileExt:string = fileParts[fileParts.length-1]
-  //     const hashsha3 = crypto.createHash('SHA3-224');
-  //     var base64Data = fs.readFileSync(filename, {encoding: 'base64'});
-  //     let hash_sha3_check = hashsha3.update(base64Data).digest("hex").toString();
-  //     console.log("hash_sha3",this.json_face_data.hash_sha3)
-  //     console.log("hash_sha3_check",hash_sha3_check)
-  //     this.json_face_data.base64_data = `data:image/${fileExt};base64,` + base64Data;
-  //     // if (hash_sha3_check === this.json_face_data.hash_sha3){
-  //     //   console.log("loadBase64Data 2")
-  //     //   this.json_face_data.base64_data = base64Data;
-  //     // }
-  //   } 
-  // };
-  // //-------------------------------------------------------------------------
-  // async setEmbeddingVersion(){
-  //     this.json_face_data.embedding_version = await getEmbeddingModelVersion();
-  // }
   //-------------------------------------------------------------------------
   async insertOnDatabase():Promise<boolean>{
       var returnSucess = false;
@@ -112,27 +60,19 @@ class KnowFace extends Face{
           return returnSucess
       try{
           conn = await AdminDbPool.getConnection();
-          
-          // let querySetUser = `SET @user_id = '${this.id_user_owner}' `;
-          // const resp = await conn.query(querySetUser);
           let queryInsertUser = `SELECT * FROM tb_know_face WHERE (id = ${id_face});`
-          // conn = await AdminDbPool.getConnection();
           const rows = await conn.query(queryInsertUser);
-          // console.log("rows",rows[0].id)
           if (rows.length > 0){
             this.id = rows[0].id.toString();
-            // console.log("id",rows[0].id.toString())
             this.created_at = rows[0].created_at;
             this.json_face_data = rows[0].json_face_data;
             this.rg_mg = rows[0].rg_mg;
-            // console.log("rg_mg",rows[0].rg_mg)
             this.cpf = rows[0].cpf;
             this.prontuario = rows[0].prontuario;
             this.embedding_complete = rows[0].embedding_complete;
             returnSucess = true;
-          } else{
+          } else
             returnSucess = false
-          }
       } catch(err:any){
           console.log("ERROR em loadFromDatabaseById() na classe KnowFace: ", err);
           throw(err);
@@ -142,9 +82,6 @@ class KnowFace extends Face{
   };
   // --------------------------------------------------------------------------
   async EmbedFace(force:boolean=false):Promise<any>{
-    // const timeOut:number = 500; // milisegundos
-    // const timeDelta:number = 10; // milisegundos
-
     var returnValue:any = {};
     var pythonScriptPath = process.env.FACE_EMBED_ROUTINE as string;
     var pythonScriptFileExist = fs.existsSync(pythonScriptPath);
@@ -169,22 +106,40 @@ class KnowFace extends Face{
       runScript = false
     }
     // INICIA O PROCESSO PARA EXECUTAR O SCIPT PYTHON
-    // console.log("runScript",runScript)
-    // console.log("commandString",commandString)
     if (runScript){
+      // try {
+      //   returnValue.logChecaPython = "Executando python...";
+        
+      //   let result = child.execSync(commandString).toString();
+        
+      //   returnValue.logChecaPython = result;
+      // }catch(e:any){
+      //   returnValue.logChecaPython = "Problema na execução do codigo python...";
+      //   throw e;
+      // }finally{
+      //     return returnValue;
+      // }
+      let strTag:string = `id face: ${this.id}, id user: ${this.id_user_owner}`
       try {
+        var cook_waiter_json = {
+          "token":"qJT28XHm5ra8Ce4C",
+          "command":commandString,
+          "tag": strTag,
+          "config": "assync"
+        }
         returnValue.logChecaPython = "Executando python...";
-        // console.log('Dir: ',__dirname)
-        // console.log('Python comand: ',commandString)
-        let result = child.execSync(commandString).toString();
-        // let result = execProm(commandString).toString();
-        returnValue.logChecaPython = result;
-      }catch(e:any){
+        axios.defaults.insecureHTTPParser = true 
+        var response = await axios.post("http://localhost:12142/queue", cook_waiter_json);
+        console.log("response",response.data)
+        returnValue.EmbedData = response.data;
+      }catch(err:any){
+        console.log("ERROR em EmbedFace() na classe SendFace: ", err);
         returnValue.logChecaPython = "Problema na execução do codigo python...";
-        throw e;
+        throw(err);
       }finally{
           return returnValue;
       }
+      
     }
   };
   // --------------------------------------------------------------------------
@@ -193,13 +148,9 @@ class KnowFace extends Face{
     let conn;
     conn = await AdminDbPool.getConnection();
     try{
-        
-        // let querySetUser = `SET @user_id = '${this.id_user_owner}' `;
-        // const resp = await conn.query(querySetUser);
         let queryInsertUser = `UPDATE tb_know_face SET json_face_data = '${JSON.stringify(this.json_face_data)}',
                 rg_mg = '${this.rg_mg}', cpf='${this.cpf}',prontuario='${this.prontuario}',
                 obsoleto = '${this.obsoleto}' WHERE id = ${this.id};`
-        // conn = await AdminDbPool.getConnection();
         const rows = await conn.query(queryInsertUser);
         returnSucess = true;
     } catch(err:any){
@@ -207,7 +158,8 @@ class KnowFace extends Face{
       console.log("ERROR em updateInDatabaseById() na classe KnowFace: ", err);
       throw(err);
     } 
-    if (conn) conn.end(); //release to pool
+    if (conn) 
+      conn.end(); 
     return returnSucess; 
   }
   // --------------------------------------------------------------------------

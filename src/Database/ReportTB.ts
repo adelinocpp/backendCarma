@@ -35,7 +35,5 @@ async function listDataFromTable(clearEmbed=true):Promise<Report[]>{
 
 // ----------------------------------------------------------------------------
 export {listDataFromTable
-    // checkTableExist,
-    // getAllDataFromTable,
-    // getListOfTablesByUserId,
+    
 };

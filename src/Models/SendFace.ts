@@ -1,42 +1,19 @@
-import { Face, StandardFields } from "./StandardFields";
 import {AdminDbPool} from "../Database/General";
-import { ImageFileData } from "./ImageFileData";
-import {getEmbeddingModelVersion} from "../Database/General";
 import fs from "fs";
-import path from "path";
-import child from "child_process";
-import api from "../Services/api";
 import axios from "axios";
 import {IReport, IFaceData} from "./Interfaces";
 import Report from "./Report";
+import { Face } from "./Face";
 
 //-----------------------------------------------------------------------------
 class SendFace extends Face{
-  // private id_user_owner: string = '';
   private id_share: string = '0';
   private json_report_list: IReport[] = [];
-  // private json_face_data: IFaceData = {};
-  // private appendix:string = '';
   constructor(){
       super();
   };
   //-------------------------------------------------------------------------
   setReportList(nReport:IReport[]){this.json_report_list = nReport};
-  //-------------------------------------------------------------------------
-  // setImageFileData(nImageFileData:ImageFileData){
-  //     let jsonFaceData:IFaceData = {};
-  //     jsonFaceData.face_image_path = nImageFileData.getFullFilePath();
-  //     jsonFaceData.hash_sha3 = nImageFileData.getHash();
-  //     this.json_face_data = jsonFaceData;
-  // }
-  // //-------------------------------------------------------------------------
-  // setUserOwner(nUserOwner:string){this.id_user_owner = nUserOwner;};
-  // //-------------------------------------------------------------------------
-  // setAppendix(nAppendix:string){this.appendix = nAppendix;};
-  // //-------------------------------------------------------------------------
-  // async setEmbeddingVersion(){
-  //     this.json_face_data.embedding_version = await getEmbeddingModelVersion();
-  // }
   //-------------------------------------------------------------------------
   async insertOnDatabase():Promise<boolean>{
       var returnSucess = false;
@@ -65,16 +42,12 @@ class SendFace extends Face{
   async loadFromDatabaseById(id_face:string, id_user_owner:string):Promise<boolean>{
       var returnSucess = false;
       let conn;
-      // if((this.id !== '0') || (this.id_user_owner !== ''))
-      //     return returnSucess
       conn = await AdminDbPool.getConnection();
       try{
           let querySetUser = `SET @user_id = '${id_user_owner}' `;
           const resp = await conn.query(querySetUser);
           let queryInsertUser = `SELECT * FROM tb_send_face WHERE ((id = ${id_face}) AND (id_user_owner = '${id_user_owner}'));`
-          // conn = await AdminDbPool.getConnection();
           const rows = await conn.query(queryInsertUser);
-          // console.log("rows",rows)
           if (rows.length > 0){
             this.id = rows[0].id.toString();
             this.created_at = rows[0].created_at;
@@ -97,9 +70,6 @@ class SendFace extends Face{
   };
   // --------------------------------------------------------------------------
   async EmbedFace(force:boolean=false):Promise<any>{
-    // const timeOut:number = 500; // milisegundos
-    // const timeDelta:number = 10; // milisegundos
-
     var returnValue:any = {};
     var pythonScriptPath = process.env.FACE_EMBED_ROUTINE as string;
     var pythonScriptFileExist = fs.existsSync(pythonScriptPath);
@@ -113,7 +83,6 @@ class SendFace extends Face{
       }
       return returnValue;
     }
-    // console.log("pythonScriptPath",pythonScriptPath)
     var commandString: string = `${process.env.PYTHON3_PATH as string} ${pythonScriptPath}  ${this.id}`;
     console.log("Embed commandString",commandString)
     var runScript = true;
@@ -125,42 +94,19 @@ class SendFace extends Face{
       runScript = false
     }
     let strTag:string = `id face: ${this.id}, id user: ${this.id_user_owner}`
-    // INICIA O PROCESSO PARA EXECUTAR O SCIPT PYTHON
-    // console.log("runScript",runScript)
-    // console.log("commandString",commandString)
     if (runScript){
-
-
       try {
         var cook_waiter_json = {
           "token":"qJT28XHm5ra8Ce4C",
           "command":commandString,
-          "tag": strTag
+          "tag": strTag,
+          "config": "assync"
         }
         returnValue.logChecaPython = "Executando python...";
-
         axios.defaults.insecureHTTPParser = true 
         var response = await axios.post("http://localhost:12142/queue", cook_waiter_json);
         console.log("response",response.data)
-        // if (response.data.mensagem === "Comando executado"){
-        //   console.log("Resposta cook and waiter recebida...")
-        //   let buildReport:Report = new Report();
-        //   await buildReport.loadFromDatabaseById(report_id,this.id_user_owner);
-        //   buildReport.setStatus('QUEUE');
-        //   await buildReport.updateInDatabaseById();
-        //   console.log("buildReport QUEUE",buildReport)
-        // }
         returnValue.EmbedData = response.data;
-        
-
-        /*
-        
-        // console.log('Dir: ',__dirname)
-        // console.log('Python comand: ',commandString)
-        let result = child.execSync(commandString).toString();
-        // let result = execProm(commandString).toString();
-        returnValue.logChecaPython = result;
-        */
       }catch(err:any){
         console.log("ERROR em EmbedFace() na classe SendFace: ", err);
         returnValue.logChecaPython = "Problema na execução do codigo python...";
@@ -168,7 +114,6 @@ class SendFace extends Face{
       }finally{
           return returnValue;
       }
-
     }
   };
   // --------------------------------------------------------------------------
@@ -198,27 +143,8 @@ class SendFace extends Face{
               "command":commandString,
               "tag": strTag
             }
-          // var cook_waiter_json = {
-          //   "insecureHTTPParser": true,
-          //   "headers":{
-          //     "Content-Type": "application/json",
-          //     "Accept": "*/*",
-          //     "Connection":"keep-alive"
-          //   },
-          //   "body": {
-          //     "token":"qJT28XHm5ra8Ce4C",
-          //     "command":commandString,
-          //     "tag": strTag
-          //   }
-          // }
-          //  http://127.0.0.1:12142/queue
-          // TODO: enviar para cook and wait
           returnValue.logChecaPython = "Executando python...";
           console.log("cook_waiter_json",cook_waiter_json)
-          
-          // axios.post("http://localhost:12142/queue", { insecureHTTPParser: true }).then((response) => {
-          //   console.log(response)
-          // })
           axios.defaults.insecureHTTPParser = true 
           var response = await axios.post("http://localhost:12142/queue", cook_waiter_json);
           console.log("response",response.data)
@@ -242,7 +168,7 @@ class SendFace extends Face{
       //---
       await this.updateInDatabaseById();
     } catch(err:any){
-      console.log("ERROR em insertOnDatabase() na classe SendFace: ", err);
+      console.log("ERROR em searchById() na classe SendFace: ", err);
       throw(err);
     }
     return returnValue

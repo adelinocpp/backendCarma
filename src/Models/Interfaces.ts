@@ -18,12 +18,6 @@ interface IImageFileData{ //json_image_file
 	file_name?:string;
 }
 // ----------------------------------------------------------------------------
-// interface IImageFileDigest{ //json_image_hash
-//     base64_data?:string;
-// 	hash_sha3?:string;
-//     appendix?:string;
-// }
-// ----------------------------------------------------------------------------
 interface ISearchRequest{ //json_request
     id_user?:string;
     force_new?:boolean;
